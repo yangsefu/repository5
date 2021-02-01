@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 和绑定的接口全类名对应 -->
+<mapper namespace="com.clive.mapper.StudentMapper">
+<sql id="pianduan">
+<where>
+      <if test="username!=null">
+      username like "%${username}%"
+      </if>
+      <if test="age!=null">
+      AND age = #{age}
+      </if>
+      <if test="score!=null">
+      score=#{score} 	
+      </if>
+</where>
+</sql>
+	<!-- id和接口的方法名对应 resultType:返回结果集 要mybatis自动帮你吧查询得到的数据装好 的前提是 mysql中的字段的名称和java中类的属性名称全部一样数据类型一样 
+		他就会自动装好 这个叫做自动装配 -->
+	<select id="findStudentAll" resultType="com.clive.bean.Student">
+		SELECT * FROM student
+	</select>
+	<!-- parameterType:传入的参数的类型 
+	     resultType：返回结果集类型 
+	     
+	     之前写问号 现在写#{} 代替问好的占位符 -->
+	<select id="findStudentById" parameterType="int"
+		resultType="com.clive.bean.Student">
+		SELECT * FROM student WHERE ID =#{id}
+	</select>
+	<!-- 
+	    会默认返回一个数字 不需要添加返回结果集
+	 -->
+    <insert id="addStudent" parameterType="com.clive.bean.Student">
+       INSERT INTO student (username,age,score,created) VALUE(#{username},#{age},#{score},#{created})
+    </insert>
+    <update id="updateStudent" parameterType="com.clive.bean.Student">
+    UPDATE student SET username = #{username},age=#{age},score=#{score},created=#{created} WHERE id=#{id}
+    </update>
+    <delete id="deleteStudent" >
+    DELETE FROM student WHERE id = #{id}
+    </delete>
+    <!-- 
+    SELETE * FROM student WHERE username LIKE "%#{username}%"
+    本来是这样写 但是#{}是占位符 而此处是%拼接一个字符串% 故用拼接符
+   1 拼接符 必须用${}
+  2 如果用拼接符 且传入值类型为string 必须写value 
+     -->
+    <select id="findLikeByUserName" parameterType="string" resultType="com.clive.bean.Student">
+     SELECT * FROM student WHERE username LIKE "%${value}%"
+    </select>
+    <select id="findStudentBySearch" resultType="com.clive.bean.Student" parameterType="com.clive.bean.Student">
+      SELECT * FROM student 
+      <!-- mybatis也可以抽取一些公共的功能 作为一个sql片段
+           当多条sql语句用到相同的片段时 可引入此片段
+       -->
+      <!-- 此标签替代关键字WHERE -->
+     <include refid="pianduan"></include>
+    </select>
+    <delete id="deleteStduentSelect">
+   <!--  DELETE FROM stduent WHERE id in (1,2,14);-->
+   DELETE FROM student
+   <where>
+   <!-- 
+   collection：需要遍历的集合
+   open：循环开始以前
+   close：循环开始以后
+   sepqrator：步长
+   我们循环后得到的是数字
+   item：循环后的对象
+   DELETE FROM student where id in (${},${},${},${})
+   
+    -->
+   <if test="ids!=null and ids.size>0">
+     <foreach collection="ids" open="id in(" close=")" item = "id" separator=",">
+       #{id}
+     </foreach>
+   </if>
+   </where>
+    </delete>
+</mapper>
